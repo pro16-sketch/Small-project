@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Details - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 24px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .navbar a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .header-info {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .header-info h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .info-item label {
+            display: block;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .info-item .value {
+            color: #333;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .badge-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-correct {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .snapshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .snapshot-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+        }
+        .snapshot-item img {
+            width: 100%;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .snapshot-item p {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>📊 Exam Session Details</h1>
+        <a href="{{ url_for('view_violations') }}">← Back to Violations</a>
+    </div>
+
+    <div class="container">
+        <div class="header-info">
+            <h2>{{ session.exam_title }}</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Student</label>
+                    <div class="value">{{ session.username }}</div>
+                </div>
+                <div class="info-item">
+                    <label>Start Time</label>
+                    <div class="value">{{ session.start_time[:19] }}</div>
+                </div>
+                <div class="info-item">
+                    <label>End Time</label>
+                    <div class="value">{{ session.end_time[:19] if session.end_time else 'In Progress' }}</div>
+                </div>
+                <div class="info-item">
+                    <label>Score</label>
+                    <div class="value">{{ session.score if session.score is not none else 'N/A' }}</div>
+                </div>
+                <div class="info-item">
+                    <label>Status</label>
+                    <div class="value" style="{% if session.status == 'banned' %}color: #dc3545; font-weight: bold;{% endif %}">
+                        {{ session.status }}
+                        {% if session.status == 'banned' %}
+                            <span style="font-size: 12px; display: block; margin-top: 5px;">
+                                (Banned due to excessive violations)
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <label>Total Violations</label>
+                    <div class="value" style="color: #dc3545;">{{ violations|length }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>⚠️ Violations ({{ violations|length }})</h3>
+            {% if violations %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for violation in violations %}
+                        <tr>
+                            <td>{{ violation.timestamp[:19] }}</td>
+                            <td>
+                                {% if violation.type == 'tab_switch' %}
+                                    🔄 Tab Switch
+                                {% elif violation.type == 'webcam_disabled' %}
+                                    📷 Webcam Disabled
+                                {% elif violation.type == 'no_face_detected' %}
+                                    👤 No Face
+                                {% elif violation.type == 'multiple_faces' %}
+                                    👥 Multiple Faces
+                                {% else %}
+                                    {{ violation.type }}
+                                {% endif %}
+                            </td>
+                            <td>{{ violation.description }}</td>
+                            <td>
+                                {% if violation.severity == 'high' %}
+                                    <span class="badge badge-high">HIGH</span>
+                                {% else %}
+                                    <span class="badge badge-medium">MEDIUM</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="text-align: center; color: #999; padding: 20px;">No violations recorded</p>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h3>📸 Webcam Snapshots ({{ snapshots|length }})</h3>
+            {% if snapshots %}
+                <div class="snapshots-grid">
+                    {% for snapshot in snapshots %}
+                    <div class="snapshot-item">
+                        <img src="{{ url_for('static', filename='uploads/' + snapshot.image_path) }}" alt="Snapshot">
+                        <p>{{ snapshot.timestamp[:19] }}</p>
+                        {% if snapshot.multiple_faces %}
+                            <span class="badge badge-high">Multiple Faces</span>
+                        {% elif not snapshot.face_detected %}
+                            <span class="badge badge-medium">No Face</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="text-align: center; color: #999; padding: 20px;">No snapshots available</p>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h3>📝 Exam Answers ({{ answers|length }})</h3>
+            {% if answers %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Student Answer</th>
+                            <th>Correct Answer</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for answer in answers %}
+                        <tr>
+                            <td>{{ answer.question_text }}</td>
+                            <td><strong>{{ answer.answer if answer.answer else 'Not Answered' }}</strong></td>
+                            <td><strong>{{ answer.correct_answer }}</strong></td>
+                            <td>
+                                {% if answer.is_correct %}
+                                    <span class="badge badge-correct">✓ Correct</span>
+                                {% else %}
+                                    <span class="badge badge-incorrect">✗ Incorrect</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="text-align: center; color: #999; padding: 20px;">No answers submitted yet</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

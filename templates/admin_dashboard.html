@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Online Exam Proctoring</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 24px;
+        }
+        .navbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .navbar a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid;
+        }
+        .stat-card.blue { border-color: #667eea; }
+        .stat-card.green { border-color: #28a745; }
+        .stat-card.orange { border-color: #ffa502; }
+        .stat-card.red { border-color: #dc3545; }
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .chart-container h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-align: center;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🎓 Admin Dashboard</h1>
+        <div class="user-info">
+            <span>Welcome, {{ session.username }}</span>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <h3>👥 Total Students</h3>
+                <div class="number">{{ total_students }}</div>
+            </div>
+            <div class="stat-card green">
+                <h3>✅ Students Participated</h3>
+                <div class="number">{{ students_participated }}</div>
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                    ({{ ((students_participated / total_students * 100) if total_students > 0 else 0)|int }}% participation)
+                </p>
+            </div>
+            <div class="stat-card orange">
+                <h3>📝 Total Exams</h3>
+                <div class="number">{{ total_exams }}</div>
+            </div>
+            <div class="stat-card orange">
+                <h3>🔄 Active Sessions</h3>
+                <div class="number">{{ active_sessions }}</div>
+            </div>
+            <div class="stat-card green">
+                <h3>🏁 Completed Sessions</h3>
+                <div class="number">{{ completed_sessions }}</div>
+            </div>
+            <div class="stat-card red">
+                <h3>⛔ Banned Sessions</h3>
+                <div class="number">{{ banned_sessions }}</div>
+            </div>
+            <div class="stat-card red">
+                <h3>⚠️ Total Violations</h3>
+                <div class="number">{{ total_violations }}</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('create_exam') }}" class="btn btn-primary">➕ Create New Exam</a>
+            <a href="{{ url_for('view_violations') }}" class="btn btn-secondary">⚠️ View All Violations</a>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>�‍🎓 Students Per Exam</h3>
+                <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 10px;">How many students have taken each exam</p>
+                <div class="chart-wrapper">
+                    <canvas id="studentParticipationChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>📊 Test Attempts Per Exam</h3>
+                <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 10px;">Total number of test attempts</p>
+                <div class="chart-wrapper">
+                    <canvas id="examStatsChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>🥧 Session Status Distribution</h3>
+                <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 10px;">Breakdown of exam session statuses</p>
+                <div class="chart-wrapper">
+                    <canvas id="sessionPieChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>⚠️ Violation Types Distribution</h3>
+                <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 10px;">Types of violations detected</p>
+                <div class="chart-wrapper">
+                    <canvas id="violationPieChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>📈 Average Exam Scores</h3>
+                <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 10px;">Average performance by exam</p>
+                <div class="chart-wrapper">
+                    <canvas id="avgScoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Recent Exams</h2>
+            {% if exams %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Duration (min)</th>
+                            <th>Created By</th>
+                            <th>Created At</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in exams %}
+                        <tr>
+                            <td><strong>{{ exam.title }}</strong></td>
+                            <td>{{ exam.duration }}</td>
+                            <td>{{ exam.creator }}</td>
+                            <td>{{ exam.created_at[:16] }}</td>
+                            <td>
+                                {% if exam.is_active %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('add_questions', exam_id=exam.id) }}" style="color: #667eea; text-decoration: none;">Manage Questions</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="color: #666; text-align: center; padding: 20px;">No exams created yet. Create your first exam!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // @ts-nocheck
+        // Jinja2 template - TypeScript checking disabled
+        
+        // GG Hues Color Palette (vibrant and visually appealing colors)
+        const ggHuesColors = [
+            '#F94144', '#F3722C', '#F8961E', '#F9844A', '#F9C74F', '#90BE6D',
+            '#43AA8B', '#4D908E', '#577590', '#277DA1', '#9D4EDD', '#F72585',
+            '#7209B7', '#3A0CA3', '#4361EE', '#4CC9F0'
+        ];
+
+        // 1. Student Participation Chart
+        const studentParticipationLabels = {{ (student_participation|map(attribute='title')|list|tojson) if student_participation else '[]'|safe }};
+        const studentCounts = {{ (student_participation|map(attribute='student_count')|list|tojson) if student_participation else '[]'|safe }};
+        
+        const studentParticipationCtx = document.getElementById('studentParticipationChart').getContext('2d');
+        if (studentParticipationLabels.length > 0) {
+            new Chart(studentParticipationCtx, {
+                type: 'bar',
+                data: {
+                    labels: studentParticipationLabels,
+                    datasets: [{
+                        label: 'Number of Students',
+                        data: studentCounts,
+                        backgroundColor: '#43AA8B',
+                        borderColor: '#277DA1',
+                        borderWidth: 2,
+                        borderRadius: 5,
+                        hoverBackgroundColor: '#4CC9F0'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Students: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: Math.max(...studentCounts, 10),
+                            ticks: { 
+                                stepSize: Math.max(1, Math.ceil(Math.max(...studentCounts) / 10)),
+                                font: { size: 11 } 
+                            },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        } else {
+            studentParticipationCtx.canvas.parentElement.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">No student participation data available yet</p>';
+        }
+
+        // 2. Exam Completion Bar Chart
+        const examLabels = {{ (exam_stats|map(attribute='title')|list|tojson) if exam_stats else '[]'|safe }};
+        const examAttempts = {{ (exam_stats|map(attribute='attempts')|list|tojson) if exam_stats else '[]'|safe }};
+        
+        const examStatsCtx = document.getElementById('examStatsChart').getContext('2d');
+        if (examLabels.length > 0) {
+            new Chart(examStatsCtx, {
+                type: 'bar',
+                data: {
+                    labels: examLabels,
+                    datasets: [{
+                        label: 'Test Attempts',
+                        data: examAttempts,
+                        backgroundColor: '#FF6B6B',
+                        borderColor: '#C92A2A',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: '#FF8787'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, labels: { font: { size: 12 }, padding: 15 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            padding: 15,
+                            titleFont: { size: 15, weight: 'bold' },
+                            bodyFont: { size: 14 },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Attempts: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: Math.max(...examAttempts, 10),
+                            ticks: { 
+                                stepSize: Math.max(1, Math.ceil(Math.max(...examAttempts) / 10)),
+                                font: { size: 12, weight: 'bold' } 
+                            },
+                            grid: { color: 'rgba(0,0,0,0.08)' },
+                            title: { display: true, text: 'Number of Attempts' }
+                        },
+                        x: {
+                            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        } else {
+            examStatsCtx.canvas.parentElement.innerHTML = '<p style="text-align:center;color:#999;padding:40px;font-size:14px;">No exam data available yet</p>';
+        }
+
+        // 2. Session Status Pie Chart
+        const sessionLabels = {{ (session_stats|map(attribute='status')|list|tojson) if session_stats else '[]'|safe }};
+        const sessionCounts = {{ (session_stats|map(attribute='count')|list|tojson) if session_stats else '[]'|safe }};
+        
+        const sessionPieCtx = document.getElementById('sessionPieChart').getContext('2d');
+        if (sessionLabels.length > 0) {
+            new Chart(sessionPieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: sessionLabels.map(s => s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')),
+                    datasets: [{
+                        data: sessionCounts,
+                        backgroundColor: ['#51CF66', '#FFD93D', '#FF6B6B'],
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverOffset: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 20, font: { size: 13, weight: 'bold' }, usePointStyle: true, pointStyle: 'circle' }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            padding: 15,
+                            titleFont: { size: 15, weight: 'bold' },
+                            bodyFont: { size: 14 },
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            sessionPieCtx.canvas.parentElement.innerHTML = '<p style="text-align:center;color:#999;padding:40px;font-size:14px;">No session data available yet</p>';
+        }
+
+        // 4. Violation Types Pie Chart
+        const violationLabels = {{ (violation_stats|map(attribute='type')|list|tojson) if violation_stats else '[]'|safe }};
+        const violationCounts = {{ (violation_stats|map(attribute='count')|list|tojson) if violation_stats else '[]'|safe }};
+        
+        const violationPieCtx = document.getElementById('violationPieChart').getContext('2d');
+        new Chart(violationPieCtx, {
+            type: 'pie',
+            data: {
+                labels: violationLabels.length > 0 ? violationLabels.map(v => v.charAt(0).toUpperCase() + v.slice(1).replace('_', ' ')) : ['No Violations'],
+                datasets: [{
+                    data: violationCounts.length > 0 ? violationCounts : [1],
+                    backgroundColor: violationCounts.length > 0 ? ggHuesColors.slice(0, violationLabels.length) : ['#E0E0E0'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, font: { size: 13, weight: 'bold' }, usePointStyle: true, pointStyle: 'circle' }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.9)',
+                        padding: 15,
+                        titleFont: { size: 15, weight: 'bold' },
+                        bodyFont: { size: 14 },
+                        callbacks: {
+                            label: function(context) {
+                                if (violationCounts.length === 0) return 'No violations recorded';
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 5. Average Scores Bar Chart
+        const avgScoreLabels = {{ (exam_stats|map(attribute='title')|list|tojson) if exam_stats else '[]'|safe }};
+        const avgScores = {{ (exam_stats|map(attribute='avg_score')|list|tojson) if exam_stats else '[]'|safe }};
+        
+        const avgScoreCtx = document.getElementById('avgScoreChart').getContext('2d');
+        if (avgScoreLabels.length > 0) {
+            new Chart(avgScoreCtx, {
+                type: 'bar',
+                data: {
+                    labels: avgScoreLabels,
+                    datasets: [{
+                        label: 'Average Score',
+                        data: avgScores,
+                        backgroundColor: '#4ECDC4',
+                        borderColor: '#2B9B8A',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: '#6FE7DE'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, labels: { font: { size: 12 }, padding: 15 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            padding: 15,
+                            titleFont: { size: 15, weight: 'bold' },
+                            bodyFont: { size: 14 },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Avg Score: ' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 100,
+                            ticks: { 
+                                stepSize: 10,
+                                font: { size: 12, weight: 'bold' } 
+                            },
+                            grid: { color: 'rgba(0,0,0,0.08)' },
+                            title: { display: true, text: 'Score (%)' }
+                        },
+                        x: {
+                            ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        } else {
+            avgScoreCtx.canvas.parentElement.innerHTML = '<p style="text-align:center;color:#999;padding:40px;font-size:14px;">No score data available yet</p>';
+        }
+    </script>
+</body>
+</html>

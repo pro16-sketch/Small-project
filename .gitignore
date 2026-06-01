@@ -1,0 +1,14 @@
+# Environment variables (contains sensitive API keys)
+.env
+
+# SQLite databases
+*.db
+*.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE files
+.vscode/
+.idea/

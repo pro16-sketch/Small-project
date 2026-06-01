@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Online Exam Proctoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 24px;
+        }
+        .navbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .navbar a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .exam-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .exam-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        .exam-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .exam-card p {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .exam-card .duration {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .result-table th,
+        .result-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .result-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        .result-table tr:hover {
+            background: #f8f9fa;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🎓 Student Dashboard</h1>
+        <div class="user-info">
+            <span>Welcome, {{ session.username }}</span>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="section">
+            <h2>📝 Available Exams</h2>
+            {% if available_exams %}
+                <div class="exam-grid">
+                    {% for exam in available_exams %}
+                    <div class="exam-card">
+                        <h3>{{ exam.title }}</h3>
+                        <p>{{ exam.description or 'No description available' }}</p>
+                        <div class="duration">⏱️ Duration: {{ exam.duration }} minutes</div>
+                        <a href="{{ url_for('start_exam', exam_id=exam.id) }}" class="btn btn-primary">Start Exam</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>📚 No exams available at the moment</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>✅ Completed Exams</h2>
+            {% if completed_exams %}
+                <table class="result-table">
+                    <thead>
+                        <tr>
+                            <th>Exam Title</th>
+                            <th>Score</th>
+                            <th>Date Taken</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in completed_exams %}
+                        <tr>
+                            <td><strong>{{ exam.title }}</strong></td>
+                            <td><span class="btn btn-success" style="padding: 5px 10px; font-size: 12px;">{{ exam.score or 'N/A' }}</span></td>
+                            <td>{{ exam.end_time[:16] if exam.end_time else 'In Progress' }}</td>
+                            <td>{{ exam.duration_minutes }} min</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <p>You haven't completed any exams yet</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if banned_exams %}
+        <div class="section">
+            <h2>⛔ Banned Exams</h2>
+            <p style="color: #dc3545; margin-bottom: 15px;">You have been permanently banned from the following exams due to excessive violations. You cannot retake these exams.</p>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th>Exam Title</th>
+                        <th>Status</th>
+                        <th>Banned Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in banned_exams %}
+                    <tr style="background-color: #ffe6e6;">
+                        <td><strong>{{ exam.title }}</strong></td>
+                        <td><span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px; font-weight: bold;">BANNED</span></td>
+                        <td>{{ exam.start_time[:16] if exam.start_time else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

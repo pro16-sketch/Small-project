@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Violations Report - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 24px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .navbar a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .badge-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-low {
+            background: #d4edda;
+            color: #155724;
+        }
+        .view-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .view-link:hover {
+            text-decoration: underline;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .filter-section input,
+        .filter-section select {
+            padding: 8px;
+            margin-right: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>⚠️ Violations Report</h1>
+        <a href="{{ url_for('admin_dashboard') }}">← Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>All Proctoring Violations</h2>
+            
+            {% if violations %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Student</th>
+                            <th>Exam</th>
+                            <th>Violation Type</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for violation in violations %}
+                        <tr>
+                            <td>{{ violation.timestamp[:19] }}</td>
+                            <td><strong>{{ violation.username }}</strong></td>
+                            <td>{{ violation.exam_title }}</td>
+                            <td>
+                                {% if violation.type == 'tab_switch' %}
+                                    🔄 Tab Switch
+                                {% elif violation.type == 'webcam_disabled' %}
+                                    📷 Webcam Disabled
+                                {% elif violation.type == 'no_face_detected' %}
+                                    👤 No Face
+                                {% elif violation.type == 'multiple_faces' %}
+                                    👥 Multiple Faces
+                                {% elif violation.type == 'copy_attempt' %}
+                                    📋 Copy Attempt
+                                {% elif violation.type == 'paste_attempt' %}
+                                    📋 Paste Attempt
+                                {% elif violation.type == 'context_menu' %}
+                                    🖱️ Context Menu
+                                {% elif violation.type == 'devtools_attempt' %}
+                                    🔧 DevTools Attempt
+                                {% else %}
+                                    {{ violation.type }}
+                                {% endif %}
+                            </td>
+                            <td>{{ violation.description }}</td>
+                            <td>
+                                {% if violation.severity == 'high' %}
+                                    <span class="badge badge-high">HIGH</span>
+                                {% elif violation.severity == 'medium' %}
+                                    <span class="badge badge-medium">MEDIUM</span>
+                                {% else %}
+                                    <span class="badge badge-low">LOW</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('view_session_details', session_id=violation.session_id) }}" class="view-link">View Session</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <p>✅ No violations recorded yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

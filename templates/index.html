@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Online Exam Proctoring</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    text-align: center;
+}
+.container {
+    background: white;
+    width: 70%;
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+}
+video {
+    border: 3px solid black;
+    margin-top: 10px;
+}
+.warning {
+    color: red;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Online Exam Proctoring System</h2>
+    <p>Webcam monitoring is active</p>
+
+    <video id="video" width="400" height="300" autoplay></video>
+    <p class="warning" id="warning"></p>
+
+    <h3>Exam Questions</h3>
+    <p>1. What is DBMS?</p>
+    <input type="text"><br><br>
+
+    <button onclick="submitExam()">Submit Exam</button>
+</div>
+
+<script>
+const video = document.getElementById("video");
+const warning = document.getElementById("warning");
+
+// --------- ACCESS WEBCAM ----------
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+    video.srcObject = stream;
+})
+.catch(() => {
+    warning.innerText = "Webcam access denied!";
+    logViolation("Webcam disabled");
+});
+
+// --------- TAB SWITCH DETECTION ----------
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        warning.innerText = "Tab switching detected!";
+        logViolation("Tab switching");
+    }
+});
+
+// --------- LOG VIOLATION ----------
+function logViolation(type) {
+    fetch("/log_violation", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ type: type })
+    });
+}
+
+// --------- SUBMIT ----------
+function submitExam() {
+    alert("Exam submitted successfully!");
+}
+</script>
+
+</body>
+</html>

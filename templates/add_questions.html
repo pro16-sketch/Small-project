@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Questions - {{ exam.title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 24px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .form-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #28a745;
+        }
+        .btn-finish {
+            background: #6c757d;
+        }
+        .questions-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .question-item {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .question-item h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .question-item p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .correct-answer {
+            color: #28a745;
+            font-weight: 600;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>📝 Add Questions to: {{ exam.title }}</h1>
+    </div>
+
+    <div class="container">
+        <a href="{{ url_for('admin_dashboard') }}" class="back-link">← Back to Dashboard</a>
+        
+        <div class="form-container">
+            <h2>Add New Question</h2>
+            <form method="POST">
+                <div class="form-group">
+                    <label for="question_text">Question Text *</label>
+                    <textarea id="question_text" name="question_text" required placeholder="Enter your question here..."></textarea>
+                </div>
+                
+                <div class="options-grid">
+                    <div class="form-group">
+                        <label for="option_a">Option A *</label>
+                        <input type="text" id="option_a" name="option_a" required placeholder="Option A">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="option_b">Option B *</label>
+                        <input type="text" id="option_b" name="option_b" required placeholder="Option B">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="option_c">Option C *</label>
+                        <input type="text" id="option_c" name="option_c" required placeholder="Option C">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="option_d">Option D *</label>
+                        <input type="text" id="option_d" name="option_d" required placeholder="Option D">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="correct_answer">Correct Answer *</label>
+                    <select id="correct_answer" name="correct_answer" required>
+                        <option value="">Select correct answer</option>
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="points">Points *</label>
+                    <input type="number" id="points" name="points" value="1" min="1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="negative_marks">Negative Marks (for wrong answer)</label>
+                    <input type="number" id="negative_marks" name="negative_marks" value="0" min="0" step="0.25">
+                    <small style="color: #666; display: block; margin-top: 5px;">Enter 0 for no negative marking, or fraction like 0.25, 0.5, etc.</small>
+                </div>
+                
+                <button type="submit" name="add_more" value="1" class="btn-secondary">Add Question & Continue</button>
+                <button type="submit" class="btn-finish">Add Question & Finish</button>
+            </form>
+        </div>
+
+        <div class="form-container" style="margin-top: 10px;">
+            <h2>Generate with AI (Gemini)</h2>
+            <div class="form-group">
+                <label for="ai_topic">Topic *</label>
+                <input type="text" id="ai_topic" placeholder="e.g., Basic Python concepts">
+            </div>
+            <div class="form-group">
+                <label for="ai_count">Number of Questions (1-10)</label>
+                <input type="number" id="ai_count" value="3" min="1" max="10">
+            </div>
+            <button id="ai_generate_btn" class="btn-secondary">Generate Questions</button>
+            <span id="ai_status" style="margin-left: 10px; color:#666;"></span>
+        </div>
+
+        {% if questions %}
+        <div class="questions-list">
+            <h2 style="margin-bottom: 20px; color: #333;">Questions Added ({{ questions|length }})</h2>
+            {% for question in questions %}
+            <div class="question-item">
+                <h4>Q{{ loop.index }}: {{ question.question_text }}</h4>
+                <p>A. {{ question.option_a }}</p>
+                <p>B. {{ question.option_b }}</p>
+                <p>C. {{ question.option_c }}</p>
+                <p>D. {{ question.option_d }}</p>
+                <p class="correct-answer">✓ Correct Answer: {{ question.correct_answer }}</p>
+                <p style="color: #667eea;">Points: {{ question.points }}</p>
+                <p style="color: #dc3545;">Negative Marks: -{{ question.negative_marks }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="exam_data" data-exam-id="{{ exam.id }}" style="display:none"></div>
+
+    <script>
+    const examDataEl = document.getElementById('exam_data');
+    const examId = examDataEl ? examDataEl.dataset.examId : '';
+    const btn = document.getElementById('ai_generate_btn');
+    const statusEl = document.getElementById('ai_status');
+    btn?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const topic = document.getElementById('ai_topic').value.trim();
+        const count = parseInt(document.getElementById('ai_count').value || '3', 10);
+        if (!topic) { statusEl.textContent = 'Please enter a topic.'; return; }
+        btn.disabled = true; statusEl.textContent = 'Generating…';
+        try {
+            const res = await fetch(`/admin/exam/${examId}/generate_questions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, num_questions: count })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                statusEl.textContent = (data && (data.error || data.details)) || 'Generation failed';
+                btn.disabled = false; return;
+            }
+            statusEl.textContent = `Inserted ${data.inserted} questions.`;
+            // Reload to show newly added questions
+            setTimeout(() => { window.location.reload(); }, 800);
+        } catch (err) {
+            statusEl.textContent = 'Request failed. Ensure Gemini API key is configured.';
+            btn.disabled = false;
+        }
+    });
+    </script>
+</body>
+</html>
