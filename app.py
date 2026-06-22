@@ -20,7 +20,7 @@ if gemini_key:
 
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(16)
+app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(16))
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 # Create upload folder if it doesn't exist

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: exam-proctoring-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: GEMINI_VISION_MODEL
+        value: gemini-1.5-flash
+      - key: SECRET_KEY
+        generateValue: true
